@@ -20,13 +20,26 @@ class Rendered(TypedDict):
     html: str
 
 
+def _steps_block(brand: Brand) -> str:
+    steps = brand.get("welcome_steps") or []
+    if not steps:
+        return ""
+    rendered = "".join(
+        step(brand, i + 1, title, body) for i, (title, body) in enumerate(steps)
+    )
+    return (
+        '<table width="100%" cellpadding="0" cellspacing="0" border="0" '
+        'style="margin:24px 0;">' + rendered + "</table>"
+    )
+
+
 def verify_email(brand: Brand, *, name: str, token: str) -> Rendered:
     url = f"{brand['app_url']}/verify-email?token={token}"
     body = (
         h1("Confirm your email address")
         + p(
-            f"Hi {first_name(name)}, you're one click away. "
-            f"Confirm your email address to activate your {brand['app_name']} account."
+            f"Hi {first_name(name)}, you're one tap from unlocking {brand['app_name']}. "
+            "Confirm your email so we can keep your account secure and send you only the alerts you ask for."
         )
         + btn(brand, url, "Confirm email address")
         + fallback(url, "24 hours")
@@ -36,22 +49,26 @@ def verify_email(brand: Brand, *, name: str, token: str) -> Rendered:
         )
     )
     return {
-        "subject": "Confirm your email address",
+        "subject": f"Confirm your email for {brand['app_name']}",
         "html": layout(brand, "Verify Email", body),
     }
 
 
 def welcome(brand: Brand, *, name: str) -> Rendered:
+    tagline = brand.get("tagline") or f"Welcome to {brand['app_name']}"
+    intro = (
+        f"Hi {first_name(name)}, your account is live. "
+        f"Here's how most people get the most out of {brand['app_name']}:"
+    )
     body = (
-        h1(f"Welcome to {brand['app_name']}")
-        + p(
-            f"Hi {first_name(name)}, your account is live. "
-            f"Explore {brand['app_name']} and get started."
-        )
-        + btn(brand, brand["app_url"], "Open the app")
+        h1(tagline)
+        + p(intro)
+        + _steps_block(brand)
+        + btn(brand, brand["app_url"], f"Open {brand['app_name']}")
     )
     return {
-        "subject": f"Welcome to {brand['app_name']}",
+        # Transactional subject (deliverable), benefit tagline lives in the H1.
+        "subject": f"Your {brand['app_name']} account is ready — getting started",
         "html": layout(brand, "Welcome", body),
     }
 
@@ -59,41 +76,41 @@ def welcome(brand: Brand, *, name: str) -> Rendered:
 def login_notification(
     brand: Brand, *, email: str, ip: str, time: str, user_agent: str
 ) -> Rendered:
+    rows = []
+    if time:
+        rows.append(("Time", time))
+    if ip:
+        rows.append(("IP Address", ip))
+    if user_agent:
+        rows.append(("Device", user_agent))
     body = (
-        h1("New login to your account")
-        + p(f"We recorded a new sign-in to the account registered to {email}.")
-        + info_table(
-            [
-                ("Time", time),
-                ("IP Address", ip),
-                ("Device", user_agent),
-            ]
-        )
+        h1("New sign-in to your account")
         + p(
-            "Recognise it? Nothing to do. If you do not, reset your password now "
-            "and we will end every active session."
+            f"We recorded a new sign-in to the {brand['app_name']} account registered to {email}."
+        )
+        + (info_table(rows) if rows else "")
+        + p(
+            "If this was you, nothing more to do. "
+            "If you don't recognise it, reset your password now and we'll end every active session."
         )
         + btn(brand, f"{brand['app_url']}/reset-password", "Reset my password")
-        + small("Location is estimated from the IP address and may not be exact.")
+        + small("Location is estimated from IP and may not be exact.")
     )
     return {
-        "subject": "New login to your account",
-        "html": layout(brand, "New Login To Your Account", body, recipient_email=email),
+        "subject": f"New sign-in to your {brand['app_name']} account",
+        "html": layout(brand, "New Sign-In", body, recipient_email=email),
     }
 
 
 def reset_password(brand: Brand, *, email: str, token: str) -> Rendered:
     from urllib.parse import quote
 
-    url = (
-        f"{brand['app_url']}/reset-password"
-        f"?token={token}&email={quote(email)}"
-    )
+    url = f"{brand['app_url']}/reset-password?token={token}&email={quote(email)}"
     body = (
         h1("Reset your password")
         + p(
             f"We received a request to reset the password for {email}. "
-            "Set a new one below."
+            "If this was you, set a new one in the next 30 minutes."
         )
         + btn(brand, url, "Choose a new password")
         + warning_box(
@@ -107,7 +124,7 @@ def reset_password(brand: Brand, *, email: str, token: str) -> Rendered:
         )
     )
     return {
-        "subject": "Reset your password",
+        "subject": f"Reset your {brand['app_name']} password",
         "html": layout(brand, "Reset Your Password", body, recipient_email=email),
     }
 
@@ -120,24 +137,27 @@ def payment_success(
     listing_title: str,
     receipt_url: str = "",
 ) -> Rendered:
-    rows = [
-        ("Amount", amount),
-        ("Listing", listing_title),
-    ]
     body = (
-        h1("Payment received")
+        h1("Payment received — you're live")
         + p(
-            f"Hi {first_name(name)}, your payment was processed successfully "
-            f"and your listing is now live on {brand['app_name']}."
+            f"Hi {first_name(name)}, your payment of {amount} is in, and "
+            f"\"{listing_title}\" is now visible on {brand['app_name']}."
         )
-        + info_table(rows)
+        + info_table([("Amount", amount), ("Listing", listing_title)])
         + btn(brand, brand["app_url"], "View my listing")
+        + p(
+            "Expect your first replies within a few hours. "
+            "Responding fast is the single biggest thing you can do — "
+            "the first provider to reply usually wins the job."
+        )
     )
     if receipt_url:
-        body += p(f'<a href="{receipt_url}" style="color:#1D4ED8;">Download receipt</a>')
+        body += p(
+            f'<a href="{receipt_url}" style="color:#1D4ED8;">Download your receipt</a>'
+        )
     return {
-        "subject": f"Payment received — {brand['app_name']}",
-        "html": layout(brand, "Payment Received", body),
+        "subject": f"Payment confirmed — {brand['app_name']}",
+        "html": layout(brand, "Payment Confirmed", body),
     }
 
 

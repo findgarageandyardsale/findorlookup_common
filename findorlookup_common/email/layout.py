@@ -12,9 +12,19 @@ def first_name(name: str) -> str:
 
 
 def layout(brand: Brand, label: str, body: str, recipient_email: str = "") -> str:
-    logo = brand["logo_url"]
+    logo = brand.get("logo_url") or ""
     support = brand["support_email"]
     app_name = brand["app_name"]
+    primary = brand.get("primary_color") or "#111827"
+    header_left = (
+        f'<img src="{logo}" alt="{app_name}" height="44" '
+        f'style="display:block;height:44px;width:auto;border:0;"/>'
+        if logo
+        else (
+            f'<span style="font-size:18px;font-weight:700;color:{primary};'
+            f'letter-spacing:-0.2px;font-family:Georgia,serif;">{app_name}</span>'
+        )
+    )
     security_note = (
         f'<p style="margin:0;font-size:12px;color:#9CA3AF;line-height:1.6;font-family:{SANS};">'
         f"Security notice sent to {recipient_email}. Account-security messages cannot be turned off.</p>"
@@ -30,7 +40,7 @@ def layout(brand: Brand, label: str, body: str, recipient_email: str = "") -> st
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#FFFFFF;">
       <tr><td style="padding:28px 32px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td><img src="{logo}" alt="{app_name}" height="44" style="display:block;height:44px;width:auto;border:0;"/></td>
+          <td>{header_left}</td>
           <td align="right" valign="middle"><span style="font-size:10px;font-weight:700;color:#9CA3AF;letter-spacing:1.5px;text-transform:uppercase;font-family:{SANS};">{label}</span></td>
         </tr></table>
       </td></tr>
