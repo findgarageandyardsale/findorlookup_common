@@ -17,8 +17,8 @@ def layout(brand: Brand, label: str, body: str, recipient_email: str = "") -> st
     app_name = brand["app_name"]
     primary = brand.get("primary_color") or "#111827"
     header_left = (
-        f'<img src="{logo}" alt="{app_name}" height="44" '
-        f'style="display:block;height:44px;width:auto;border:0;"/>'
+        f'<img src="{logo}" alt="{app_name}" height="60" '
+        f'style="display:block;height:60px;width:auto;border:0;"/>'
         if logo
         else (
             f'<span style="font-size:18px;font-weight:700;color:{primary};'
