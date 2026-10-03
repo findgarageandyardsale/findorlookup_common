@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "findorlookup-common"
+version = "0.1.0"
+description = "Shared AWS (SES + S3) + branded email infrastructure for FindOrLookup apps (fcs, fgys, foh, fsf)."
+requires-python = ">=3.10"
+dependencies = [
+    "Django>=5.0,<6.0",
+    "boto3>=1.35",
+    "django-storages>=1.14",
+    "django-ses>=4.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["findorlookup_common*"]
