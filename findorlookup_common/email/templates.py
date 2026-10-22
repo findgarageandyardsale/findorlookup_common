@@ -2,6 +2,7 @@ from typing import Callable, TypedDict
 
 from findorlookup_common.settings.brand import Brand
 from findorlookup_common.email.layout import (
+    SANS,
     btn,
     fallback,
     first_name,
@@ -103,28 +104,37 @@ def login_notification(
 
 
 def reset_password(brand: Brand, *, email: str, token: str) -> Rendered:
-    from urllib.parse import quote
-
-    url = f"{brand['app_url']}/reset-password?token={token}&email={quote(email)}"
+    pin_box = (
+        '<table width="100%" cellpadding="0" cellspacing="0" border="0" '
+        'style="margin:28px 0;"><tr><td align="center">'
+        '<div style="display:inline-block;padding:18px 36px;background-color:#F3F4F6;'
+        'border:1px solid #E5E7EB;border-radius:10px;">'
+        '<div style="font-size:12px;color:#6B7280;letter-spacing:1.5px;'
+        f'text-transform:uppercase;font-family:{SANS};">'
+        'Your reset PIN</div>'
+        '<div style="margin-top:6px;font-size:34px;font-weight:700;color:#111827;'
+        'letter-spacing:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">'
+        f'{token}</div></div></td></tr></table>'
+    )
     body = (
         h1("Reset your password")
         + p(
             f"We received a request to reset the password for {email}. "
-            "If this was you, set a new one in the next 30 minutes."
+            "If this was you, open the app, choose <strong>Forgot Password</strong>, "
+            "and enter the PIN below."
         )
-        + btn(brand, url, "Choose a new password")
+        + pin_box
         + warning_box(
-            "<strong>This link expires in 30 minutes.</strong> "
+            "<strong>This PIN expires in 30 minutes.</strong> "
             "After that, request a fresh one from the sign-in screen."
         )
-        + fallback(url, "30 minutes")
         + small(
             "If you did not request a password reset, ignore this email. "
             "Your password will not change."
         )
     )
     return {
-        "subject": f"Reset your {brand['app_name']} password",
+        "subject": f"Your {brand['app_name']} password reset PIN: {token}",
         "html": layout(brand, "Reset Your Password", body, recipient_email=email),
     }
 
