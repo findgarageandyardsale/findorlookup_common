@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "findorlookup-common"
-version = "0.2.1"
+version = "0.3.0"
 description = "Shared AWS (SES + S3) + branded email infrastructure for FindOrLookup apps (fcs, fgys, foh, fsf)."
 requires-python = ">=3.10"
 dependencies = [
